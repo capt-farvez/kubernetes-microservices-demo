@@ -1,0 +1,426 @@
+{
+  "version": 3,
+  "name": "Microservices Demo API Gateway (Local)",
+  "timeout": "60000ms",
+  "cache_ttl": "3600s",
+  "host": [
+    "http://localhost:8080"
+  ],
+
+  "extra_config": {
+    "security/cors": {
+      "allow_origins": [
+        "*"
+      ],
+      "allow_methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "allow_headers": [
+        "Origin",
+        "Authorization",
+        "Content-Type",
+        "Content-Disposition",
+        "Accept"
+      ],
+      "expose_headers": [
+        "Content-Length",
+        "Content-Type"
+      ],
+      "max_age": "12h",
+      "allow_credentials": true,
+      "debug": true
+    },
+    "router": {
+      "auto_options": true
+    }
+  },
+
+  "endpoints": [
+    {
+      "endpoint": "/",
+      "method": "GET",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "url_pattern": "/fake",
+          "method": "GET",
+          "host": ["http://fake-backend"],
+          "encoding": "json"
+        }
+      ],
+      "extra_config": {
+        "proxy": {
+          "static": {
+            "data": {
+              "message": "Welcome to Microservices Demo API Gateway (Local)",
+              "version": "1.0.0",
+              "description": "API Gateway for Microservices Demo - Local Development",
+              "services": {
+                "service-a": "http://host.docker.internal:8005",
+                "service-b": "http://host.docker.internal:8006",
+                "service-c": "http://host.docker.internal:8007"
+              },
+              "endpoints": [
+                "/api/v1/service-a/",
+                "/api/v1/service-a/health",
+                "/api/v1/service-a/services/call-service-b",
+                "/api/v1/service-a/services/call-service-c",
+                "/api/v1/service-b/",
+                "/api/v1/service-b/health",
+                "/api/v1/service-b/services/call-service-a",
+                "/api/v1/service-b/services/call-service-c",
+                "/api/v1/service-c/",
+                "/api/v1/service-c/health",
+                "/api/v1/service-c/services/call-service-a",
+                "/api/v1/service-c/services/call-service-b"
+              ],
+              "status": "running",
+              "note": "Using host.docker.internal to access host services from Docker container"
+            },
+            "strategy": "always"
+          }
+        }
+      }
+    },
+
+    {
+      "endpoint": "/api/v1/service-a/",
+      "method": "GET",
+      "output_encoding": "json",
+      "input_headers": ["Content-Type", "X-Request-Id"],
+      "backend": [
+        {
+          "url_pattern": "/api/v1/",
+          "method": "GET",
+          "host": [
+            "http://host.docker.internal:8005"
+          ],
+          "_comment": "Using host.docker.internal to access host services from Docker container",
+          "encoding": "json",
+          "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            }
+          }
+        }
+      ],
+      "extra_config": {
+        "github.com/devopsfaith/krakend/http": {
+          "return_error_details": "backend"
+        }
+      }
+    },
+
+    {
+      "endpoint": "/api/v1/service-a/health",
+      "method": "GET",
+      "output_encoding": "json",
+      "input_headers": ["Content-Type", "X-Request-Id"],
+      "backend": [
+        {
+          "url_pattern": "/api/v1/health",
+          "method": "GET",
+          "host": [
+            "http://host.docker.internal:8005"
+          ],
+          "_comment": "Using host.docker.internal to access host services from Docker container",
+          "encoding": "json",
+          "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            }
+          }
+        }
+      ],
+      "extra_config": {
+        "github.com/devopsfaith/krakend/http": {
+          "return_error_details": "backend"
+        }
+      }
+    },
+
+    {
+      "endpoint": "/api/v1/service-a/services/call-service-b",
+      "method": "GET",
+      "output_encoding": "json",
+      "input_headers": ["Content-Type", "X-Request-Id"],
+      "backend": [
+        {
+          "url_pattern": "/api/v1/services/call-service-b",
+          "method": "GET",
+          "host": [
+            "http://host.docker.internal:8005"
+          ],
+          "_comment": "Using host.docker.internal to access host services from Docker container",
+          "encoding": "json",
+          "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            }
+          }
+        }
+      ],
+      "extra_config": {
+        "github.com/devopsfaith/krakend/http": {
+          "return_error_details": "backend"
+        }
+      }
+    },
+
+    {
+      "endpoint": "/api/v1/service-a/services/call-service-c",
+      "method": "GET",
+      "output_encoding": "json",
+      "input_headers": ["Content-Type", "X-Request-Id"],
+      "backend": [
+        {
+          "url_pattern": "/api/v1/services/call-service-c",
+          "method": "GET",
+          "host": [
+            "http://host.docker.internal:8005"
+          ],
+          "_comment": "Using host.docker.internal to access host services from Docker container",
+          "encoding": "json",
+          "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            }
+          }
+        }
+      ],
+      "extra_config": {
+        "github.com/devopsfaith/krakend/http": {
+          "return_error_details": "backend"
+        }
+      }
+    },
+
+    {
+      "endpoint": "/api/v1/service-b/",
+      "method": "GET",
+      "output_encoding": "json",
+      "input_headers": ["Content-Type", "X-Request-Id"],
+      "backend": [
+        {
+          "url_pattern": "/api/v1/",
+          "method": "GET",
+          "host": [
+            "http://host.docker.internal:8006"
+          ],
+          "_comment": "Using host.docker.internal to access host services from Docker container",
+          "encoding": "json",
+          "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            }
+          }
+        }
+      ],
+      "extra_config": {
+        "github.com/devopsfaith/krakend/http": {
+          "return_error_details": "backend"
+        }
+      }
+    },
+
+    {
+      "endpoint": "/api/v1/service-b/health",
+      "method": "GET",
+      "output_encoding": "json",
+      "input_headers": ["Content-Type", "X-Request-Id"],
+      "backend": [
+        {
+          "url_pattern": "/api/v1/health",
+          "method": "GET",
+          "host": [
+            "http://host.docker.internal:8006"
+          ],
+          "_comment": "Using host.docker.internal to access host services from Docker container",
+          "encoding": "json",
+          "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            }
+          }
+        }
+      ],
+      "extra_config": {
+        "github.com/devopsfaith/krakend/http": {
+          "return_error_details": "backend"
+        }
+      }
+    },
+
+    {
+      "endpoint": "/api/v1/service-b/services/call-service-a",
+      "method": "GET",
+      "output_encoding": "json",
+      "input_headers": ["Content-Type", "X-Request-Id"],
+      "backend": [
+        {
+          "url_pattern": "/api/v1/services/call-service-a",
+          "method": "GET",
+          "host": [
+            "http://host.docker.internal:8006"
+          ],
+          "_comment": "Using host.docker.internal to access host services from Docker container",
+          "encoding": "json",
+          "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            }
+          }
+        }
+      ],
+      "extra_config": {
+        "github.com/devopsfaith/krakend/http": {
+          "return_error_details": "backend"
+        }
+      }
+    },
+
+    {
+      "endpoint": "/api/v1/service-b/services/call-service-c",
+      "method": "GET",
+      "output_encoding": "json",
+      "input_headers": ["Content-Type", "X-Request-Id"],
+      "backend": [
+        {
+          "url_pattern": "/api/v1/services/call-service-c",
+          "method": "GET",
+          "host": [
+            "http://host.docker.internal:8006"
+          ],
+          "_comment": "Using host.docker.internal to access host services from Docker container",
+          "encoding": "json",
+          "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            }
+          }
+        }
+      ],
+      "extra_config": {
+        "github.com/devopsfaith/krakend/http": {
+          "return_error_details": "backend"
+        }
+      }
+    },
+
+    {
+      "endpoint": "/api/v1/service-c/",
+      "method": "GET",
+      "output_encoding": "json",
+      "input_headers": ["Content-Type", "X-Request-Id"],
+      "backend": [
+        {
+          "url_pattern": "/api/v1/",
+          "method": "GET",
+          "host": [
+            "http://host.docker.internal:8007"
+          ],
+          "_comment": "Using host.docker.internal to access host services from Docker container",
+          "encoding": "json",
+          "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            }
+          }
+        }
+      ],
+      "extra_config": {
+        "github.com/devopsfaith/krakend/http": {
+          "return_error_details": "backend"
+        }
+      }
+    },
+
+    {
+      "endpoint": "/api/v1/service-c/health",
+      "method": "GET",
+      "output_encoding": "json",
+      "input_headers": ["Content-Type", "X-Request-Id"],
+      "backend": [
+        {
+          "url_pattern": "/api/v1/health",
+          "method": "GET",
+          "host": [
+            "http://host.docker.internal:8007"
+          ],
+          "_comment": "Using host.docker.internal to access host services from Docker container",
+          "encoding": "json",
+          "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            }
+          }
+        }
+      ],
+      "extra_config": {
+        "github.com/devopsfaith/krakend/http": {
+          "return_error_details": "backend"
+        }
+      }
+    },
+
+    {
+      "endpoint": "/api/v1/service-c/services/call-service-a",
+      "method": "GET",
+      "output_encoding": "json",
+      "input_headers": ["Content-Type", "X-Request-Id"],
+      "backend": [
+        {
+          "url_pattern": "/api/v1/services/call-service-a",
+          "method": "GET",
+          "host": [
+            "http://host.docker.internal:8007"
+          ],
+          "_comment": "Using host.docker.internal to access host services from Docker container",
+          "encoding": "json",
+          "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            }
+          }
+        }
+      ],
+      "extra_config": {
+        "github.com/devopsfaith/krakend/http": {
+          "return_error_details": "backend"
+        }
+      }
+    },
+
+    {
+      "endpoint": "/api/v1/service-c/services/call-service-b",
+      "method": "GET",
+      "output_encoding": "json",
+      "input_headers": ["Content-Type", "X-Request-Id"],
+      "backend": [
+        {
+          "url_pattern": "/api/v1/services/call-service-b",
+          "method": "GET",
+          "host": [
+            "http://host.docker.internal:8007"
+          ],
+          "_comment": "Using host.docker.internal to access host services from Docker container",
+          "encoding": "json",
+          "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            }
+          }
+        }
+      ],
+      "extra_config": {
+        "github.com/devopsfaith/krakend/http": {
+          "return_error_details": "backend"
+        }
+      }
+    }
+  ]
+}

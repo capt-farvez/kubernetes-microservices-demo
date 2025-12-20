@@ -1,0 +1,91 @@
+version: "3.8"
+
+x-common-env: &common_env
+  PYTHONUNBUFFERED: "1"    # Disable Python output buffering for real-time logs
+  LOG_LEVEL: "INFO"        # Application logging level
+
+services:
+  service-a:
+    build:
+      context: ./services/service-a    # Path to Dockerfile directory
+    container_name: service-a          # Custom container name
+    environment:
+      <<: *common_env                  # Merge common environment variables
+      SERVICE_B_URL: "http://service-b:8006"   # Inter-service communication URL
+      SERVICE_C_URL: "http://service-c:8007"   # Docker DNS resolves service names
+    command: ["uvicorn", "service_a.main:app", "--host", "0.0.0.0", "--port", "8005"]
+    ports:
+      - "8005:8005"                    # Map host:container ports
+    networks:
+      - microservices-network          # Attach to custom network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/api/v1/health"]
+      interval: 30s                    # Check every 30 seconds
+      timeout: 10s                     # Fail if no response in 10 seconds
+      retries: 3                       # Mark unhealthy after 3 failures
+      start_period: 10s                # Grace period before first check
+
+  
+  service-b:
+    build:
+      context: ./services/service-b
+    container_name: service-b
+    environment:
+      <<: *common_env
+      SERVICE_A_URL: "http://service-a:8005"
+      SERVICE_C_URL: "http://service-c:8007"
+    command: ["uvicorn", "service_b.main:app", "--host", "0.0.0.0", "--port", "8006"]
+    ports:
+      - "8006:8006"
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8006/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  
+  service-c:
+    build:
+      context: ./services/service-c
+    container_name: service-c
+    environment:
+      <<: *common_env
+      SERVICE_A_URL: "http://service-a:8005"
+      SERVICE_B_URL: "http://service-b:8006"
+    command: ["uvicorn", "service_c.main:app", "--host", "0.0.0.0", "--port", "8007"]
+    ports:
+      - "8007:8007"
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8007/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  
+  krakend:
+    image: devopsfaith/krakend:2.7     # Pre-built KrakenD image
+    container_name: krakend
+    volumes:
+      # Mount local config directory to container
+      - ./api-gateway/krakend-local:/etc/krakend
+    ports:
+      - "8090:8080"                    # Expose gateway on host port 8090
+    command: ["run", "-d", "-c", "/etc/krakend/krakend.json"]
+    depends_on:                        # Start after these services
+      - service-a
+      - service-b
+      - service-c
+    restart: unless-stopped            # Auto-restart on failure
+    networks:
+      - microservices-network
+
+
+networks:
+  microservices-network:
+    driver: bridge    # Bridge network allows containers to communicate by name

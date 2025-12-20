@@ -9,7 +9,7 @@ router = APIRouter(prefix="/services", tags=["Services"])
 @router.get("/call-service-a")
 async def call_service_a():
     async with httpx.AsyncClient() as client:
-        response = await client.get(f"{SERVICE_A_URL}/")
+        response = await client.get(f"{SERVICE_A_URL}/api/v1/")
         return {
             "service": "B",
             "message": "Called Service A",
@@ -20,7 +20,7 @@ async def call_service_a():
 @router.get("/call-service-c")
 async def call_service_c():
     async with httpx.AsyncClient() as client:
-        response = await client.get(f"{SERVICE_C_URL}/")
+        response = await client.get(f"{SERVICE_C_URL}/api/v1/")
         return {
             "service": "B",
             "message": "Called Service C",

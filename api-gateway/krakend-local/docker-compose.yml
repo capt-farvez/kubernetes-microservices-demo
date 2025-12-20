@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  krakend:
+    image: devopsfaith/krakend:2.7
+    volumes:
+      - .:/etc/krakend-local
+    ports:
+      - "8090:8080"
+    command: ["run", "-d", "-c", "/etc/krakend-local/krakend.json"]
+    restart: unless-stopped

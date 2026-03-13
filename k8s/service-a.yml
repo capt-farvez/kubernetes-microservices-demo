@@ -1,0 +1,79 @@
+##########################################################
+# Service A — Deployment + Service
+# Port: 8005
+# Depends on: Service B (8006), Service C (8007)
+##########################################################
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-a
+  namespace: microservices-demo
+  labels:
+    app: service-a
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service-a
+  template:
+    metadata:
+      labels:
+        app: service-a
+    spec:
+      containers:
+        - name: service-a
+          image: service-a:latest
+          imagePullPolicy: IfNotPresent # Use local images (e.g. from Minikube docker-env)
+          ports:
+            - containerPort: 8005
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: SERVICE_B_URL
+              value: "http://service-b:8006" # K8s Service DNS resolves this
+            - name: SERVICE_C_URL
+              value: "http://service-c:8007"
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8005
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8005
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-a
+  namespace: microservices-demo
+  labels:
+    app: service-a
+spec:
+  selector:
+    app: service-a
+  ports:
+    - protocol: TCP
+      port: 8005       # Port other services use to reach Service A
+      targetPort: 8005  # Port the container listens on
+  type: ClusterIP       # Internal-only — accessible within the cluster

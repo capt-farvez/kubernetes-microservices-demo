@@ -1,0 +1,228 @@
+##########################################################
+# KrakenD API Gateway — ConfigMap + Deployment + Service
+# Port: 8080 (internal), exposed via NodePort 30090
+##########################################################
+
+# ConfigMap holds the KrakenD configuration (from krakend-prod)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: krakend-config
+  namespace: microservices-demo
+  labels:
+    app: krakend
+data:
+  krakend.json: |
+    {
+      "version": 3,
+      "name": "Microservices Demo API Gateway",
+      "timeout": "60000ms",
+      "cache_ttl": "3600s",
+      "host": ["http://localhost:8080"],
+      "extra_config": {
+        "security/cors": {
+          "allow_origins": ["*"],
+          "allow_methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+          "allow_headers": ["Origin", "Authorization", "Content-Type", "Content-Disposition", "Accept"],
+          "expose_headers": ["Content-Length", "Content-Type"],
+          "max_age": "12h",
+          "allow_credentials": true,
+          "debug": false
+        },
+        "router": {
+          "auto_options": true
+        }
+      },
+      "endpoints": [
+        {
+          "endpoint": "/",
+          "method": "GET",
+          "output_encoding": "json",
+          "backend": [
+            {
+              "url_pattern": "/fake",
+              "method": "GET",
+              "host": ["http://fake-backend"],
+              "encoding": "json"
+            }
+          ],
+          "extra_config": {
+            "proxy": {
+              "static": {
+                "data": {
+                  "message": "Welcome to Microservices Demo API Gateway",
+                  "version": "1.0.0",
+                  "description": "API Gateway for Microservices Demo",
+                  "services": {
+                    "service-a": "http://service-a:8005",
+                    "service-b": "http://service-b:8006",
+                    "service-c": "http://service-c:8007"
+                  },
+                  "status": "running"
+                },
+                "strategy": "always"
+              }
+            }
+          }
+        },
+        {
+          "endpoint": "/api/v1/service-a/",
+          "method": "GET",
+          "output_encoding": "json",
+          "input_headers": ["Content-Type", "X-Request-Id"],
+          "backend": [{ "url_pattern": "/api/v1/", "method": "GET", "host": ["http://service-a:8005"], "encoding": "json", "extra_config": { "backend/http": { "return_error_code": true } } }]
+        },
+        {
+          "endpoint": "/api/v1/service-a/health",
+          "method": "GET",
+          "output_encoding": "json",
+          "input_headers": ["Content-Type", "X-Request-Id"],
+          "backend": [{ "url_pattern": "/api/v1/health", "method": "GET", "host": ["http://service-a:8005"], "encoding": "json", "extra_config": { "backend/http": { "return_error_code": true } } }]
+        },
+        {
+          "endpoint": "/api/v1/service-a/services/call-service-b",
+          "method": "GET",
+          "output_encoding": "json",
+          "input_headers": ["Content-Type", "X-Request-Id"],
+          "backend": [{ "url_pattern": "/api/v1/services/call-service-b", "method": "GET", "host": ["http://service-a:8005"], "encoding": "json", "extra_config": { "backend/http": { "return_error_code": true } } }]
+        },
+        {
+          "endpoint": "/api/v1/service-a/services/call-service-c",
+          "method": "GET",
+          "output_encoding": "json",
+          "input_headers": ["Content-Type", "X-Request-Id"],
+          "backend": [{ "url_pattern": "/api/v1/services/call-service-c", "method": "GET", "host": ["http://service-a:8005"], "encoding": "json", "extra_config": { "backend/http": { "return_error_code": true } } }]
+        },
+        {
+          "endpoint": "/api/v1/service-b/",
+          "method": "GET",
+          "output_encoding": "json",
+          "input_headers": ["Content-Type", "X-Request-Id"],
+          "backend": [{ "url_pattern": "/api/v1/", "method": "GET", "host": ["http://service-b:8006"], "encoding": "json", "extra_config": { "backend/http": { "return_error_code": true } } }]
+        },
+        {
+          "endpoint": "/api/v1/service-b/health",
+          "method": "GET",
+          "output_encoding": "json",
+          "input_headers": ["Content-Type", "X-Request-Id"],
+          "backend": [{ "url_pattern": "/api/v1/health", "method": "GET", "host": ["http://service-b:8006"], "encoding": "json", "extra_config": { "backend/http": { "return_error_code": true } } }]
+        },
+        {
+          "endpoint": "/api/v1/service-b/services/call-service-a",
+          "method": "GET",
+          "output_encoding": "json",
+          "input_headers": ["Content-Type", "X-Request-Id"],
+          "backend": [{ "url_pattern": "/api/v1/services/call-service-a", "method": "GET", "host": ["http://service-b:8006"], "encoding": "json", "extra_config": { "backend/http": { "return_error_code": true } } }]
+        },
+        {
+          "endpoint": "/api/v1/service-b/services/call-service-c",
+          "method": "GET",
+          "output_encoding": "json",
+          "input_headers": ["Content-Type", "X-Request-Id"],
+          "backend": [{ "url_pattern": "/api/v1/services/call-service-c", "method": "GET", "host": ["http://service-b:8006"], "encoding": "json", "extra_config": { "backend/http": { "return_error_code": true } } }]
+        },
+        {
+          "endpoint": "/api/v1/service-c/",
+          "method": "GET",
+          "output_encoding": "json",
+          "input_headers": ["Content-Type", "X-Request-Id"],
+          "backend": [{ "url_pattern": "/api/v1/", "method": "GET", "host": ["http://service-c:8007"], "encoding": "json", "extra_config": { "backend/http": { "return_error_code": true } } }]
+        },
+        {
+          "endpoint": "/api/v1/service-c/health",
+          "method": "GET",
+          "output_encoding": "json",
+          "input_headers": ["Content-Type", "X-Request-Id"],
+          "backend": [{ "url_pattern": "/api/v1/health", "method": "GET", "host": ["http://service-c:8007"], "encoding": "json", "extra_config": { "backend/http": { "return_error_code": true } } }]
+        },
+        {
+          "endpoint": "/api/v1/service-c/services/call-service-a",
+          "method": "GET",
+          "output_encoding": "json",
+          "input_headers": ["Content-Type", "X-Request-Id"],
+          "backend": [{ "url_pattern": "/api/v1/services/call-service-a", "method": "GET", "host": ["http://service-c:8007"], "encoding": "json", "extra_config": { "backend/http": { "return_error_code": true } } }]
+        },
+        {
+          "endpoint": "/api/v1/service-c/services/call-service-b",
+          "method": "GET",
+          "output_encoding": "json",
+          "input_headers": ["Content-Type", "X-Request-Id"],
+          "backend": [{ "url_pattern": "/api/v1/services/call-service-b", "method": "GET", "host": ["http://service-c:8007"], "encoding": "json", "extra_config": { "backend/http": { "return_error_code": true } } }]
+        }
+      ]
+    }
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: krakend
+  namespace: microservices-demo
+  labels:
+    app: krakend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: krakend
+  template:
+    metadata:
+      labels:
+        app: krakend
+    spec:
+      containers:
+        - name: krakend
+          image: devopsfaith/krakend:2.7
+          ports:
+            - containerPort: 8080
+          command: ["krakend", "run", "-c", "/etc/krakend/krakend.json"]
+          volumeMounts:
+            - name: krakend-config
+              mountPath: /etc/krakend
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: krakend-config
+          configMap:
+            name: krakend-config
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: krakend
+  namespace: microservices-demo
+  labels:
+    app: krakend
+spec:
+  selector:
+    app: krakend
+  ports:
+    - protocol: TCP
+      port: 8080        # Cluster-internal port
+      targetPort: 8080
+      nodePort: 30090    # Access from outside the cluster via <NodeIP>:30090
+  type: NodePort         # Exposed externally — this is the gateway entry point

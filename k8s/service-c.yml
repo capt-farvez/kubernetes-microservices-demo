@@ -1,0 +1,79 @@
+##########################################################
+# Service C — Deployment + Service
+# Port: 8007
+# Depends on: Service A (8005), Service B (8006)
+##########################################################
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-c
+  namespace: microservices-demo
+  labels:
+    app: service-c
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service-c
+  template:
+    metadata:
+      labels:
+        app: service-c
+    spec:
+      containers:
+        - name: service-c
+          image: service-c:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8007
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: SERVICE_A_URL
+              value: "http://service-a:8005"
+            - name: SERVICE_B_URL
+              value: "http://service-b:8006"
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8007
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8007
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-c
+  namespace: microservices-demo
+  labels:
+    app: service-c
+spec:
+  selector:
+    app: service-c
+  ports:
+    - protocol: TCP
+      port: 8007
+      targetPort: 8007
+  type: ClusterIP
